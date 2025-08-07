@@ -22,10 +22,18 @@
   "author": "Jesbin",
   "license": "MIT",
   "dependencies": {
-    "ws": "^8.14.2",
-    "uuid": "^9.0.1"
+    "ws": "8.14.2",
+    "uuid": "9.0.1"
   },
   "engines": {
     "node": ">=14.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thejesbin/flux-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thejesbin/flux-manager/issues"
+  },
+  "homepage": "https://github.com/thejesbin/flux-manager#readme"
 }

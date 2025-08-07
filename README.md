@@ -194,8 +194,8 @@ Contributions are welcome! Please follow these guidelines:
 
 ```bash
 # Clone the repository
-git clone https://github.com/thejesbin/flux-debugger.git
-cd flux-debugger
+git clone https://github.com/thejesbin/flux-manager.git
+cd flux-manager
 
 # Install dependencies
 npm install
@@ -207,4 +207,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Made with 💜 by the Flux Manager Team**
 
-For questions, issues, or feature requests, please visit our [GitHub repository](https://github.com/thejesbin/flux-debugger).
+For questions, issues, or feature requests, please visit our [GitHub repository](https://github.com/thejesbin/flux-manager).
