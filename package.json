@@ -1,0 +1,31 @@
+{
+  "name": "flux-manager",
+  "version": "1.0.0",
+  "description": "A comprehensive Node.js application management and debugging platform for the Flux.js ecosystem",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "flux-manager",
+    "flux-js",
+    "debugging",
+    "monitoring",
+    "management",
+    "http",
+    "express",
+    "middleware",
+    "devops",
+    "nodejs"
+  ],
+  "author": "Jesbin",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.14.2",
+    "uuid": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
