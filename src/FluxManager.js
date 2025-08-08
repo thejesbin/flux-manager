@@ -434,32 +434,6 @@ class FluxManager {
   }
 
   /**
-   * Handle API requests for same-port integration
-   * Routes API calls to the appropriate handlers
-   * 
-   * @private
-   * @param {http.IncomingMessage} req - HTTP request object
-   * @param {http.ServerResponse} res - HTTP response object
-   */
-  _handleAPIRequest(req, res) {
-    // Parse the API path
-    const apiPath = req.path.replace('/api', '');
-    
-    if (apiPath === '/requests' && req.method === 'GET') {
-      return this._handleRequestsAPI(req, res);
-    } else if (apiPath.startsWith('/requests/') && req.method === 'GET') {
-      return this._handleRequestDetailAPI(req, res);
-    } else if (apiPath === '/stats' && req.method === 'GET') {
-      return this._handleStatsAPI(req, res);
-    } else if (apiPath === '/requests' && req.method === 'DELETE') {
-      return this._handleClearRequestsAPI(req, res);
-    } else {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'API endpoint not found' }));
-    }
-  }
-
-  /**
    * Get content type for file extension
    * 
    * @private
@@ -714,13 +688,15 @@ class FluxManager {
         
         // Handle API routes
         if (req.path.startsWith('/api/')) {
-          return this._handleAPIRequest(req, res);
+          return this._handleApiRequest(req, res, req.path);
         }
         
         // Handle static assets (app.js, styles.css)
-        if (req.path === '/app.js' || req.path === '/styles.css') {
-          const filePath = req.path.substring(1); // Remove leading slash
-          return this._serveFile(res, filePath, this._getContentType(filePath));
+        if (req.path === '/app.js') {
+          return this._serveFile(res, 'app.js', 'application/javascript');
+        }
+        if (req.path === '/styles.css') {
+          return this._serveFile(res, 'styles.css', 'text/css');
         }
         
         // Handle WebSocket upgrade requests
