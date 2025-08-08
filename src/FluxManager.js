@@ -434,17 +434,66 @@ class FluxManager {
   }
 
   /**
+   * Handle API requests for same-port integration
+   * Routes API calls to the appropriate handlers
+   * 
+   * @private
+   * @param {http.IncomingMessage} req - HTTP request object
+   * @param {http.ServerResponse} res - HTTP response object
+   */
+  _handleAPIRequest(req, res) {
+    // Parse the API path
+    const apiPath = req.path.replace('/api', '');
+    
+    if (apiPath === '/requests' && req.method === 'GET') {
+      return this._handleRequestsAPI(req, res);
+    } else if (apiPath.startsWith('/requests/') && req.method === 'GET') {
+      return this._handleRequestDetailAPI(req, res);
+    } else if (apiPath === '/stats' && req.method === 'GET') {
+      return this._handleStatsAPI(req, res);
+    } else if (apiPath === '/requests' && req.method === 'DELETE') {
+      return this._handleClearRequestsAPI(req, res);
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'API endpoint not found' }));
+    }
+  }
+
+  /**
+   * Get content type for file extension
+   * 
+   * @private
+   * @param {string} filePath - File path to determine content type for
+   * @returns {string} MIME type
+   */
+  _getContentType(filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    const contentTypes = {
+      '.html': 'text/html',
+      '.js': 'application/javascript',
+      '.css': 'text/css',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.ico': 'image/x-icon'
+    };
+    return contentTypes[ext] || 'text/plain';
+  }
+
+  /**
    * Serve static files (CSS, JS, etc.) for the dashboard
    * 
    * @private
    * @param {http.ServerResponse} res - HTTP response object
-   * @param {string} filePath - Absolute path to the file to serve
+   * @param {string} filePath - Relative path to the file to serve
    * @param {string} contentType - MIME type for the Content-Type header
    */
   _serveFile(res, filePath, contentType) {
     try {
-      if (fs.existsSync(filePath)) {
-        const content = fs.readFileSync(filePath);
+      const fullPath = path.join(__dirname, '../frontend/dist', filePath);
+      if (fs.existsSync(fullPath)) {
+        const content = fs.readFileSync(fullPath);
         res.writeHead(200, { 'Content-Type': contentType });
         res.end(content);
       } else {
@@ -654,6 +703,37 @@ class FluxManager {
     // Auto-detect framework and integrate
     if (app && typeof app.use === 'function') {
       // Express-like framework
+      
+      // 🔧 SAME-PORT FIX: Add dashboard routes as Express middleware
+      // This ensures dashboard works even with complex middleware stacks and 404 handlers
+      app.use(this.options.route, (req, res, next) => {
+        // Handle dashboard UI routes
+        if (req.path === '/' || req.path === '') {
+          return this._serveDynamicHTML(res);
+        }
+        
+        // Handle API routes
+        if (req.path.startsWith('/api/')) {
+          return this._handleAPIRequest(req, res);
+        }
+        
+        // Handle static assets (app.js, styles.css)
+        if (req.path === '/app.js' || req.path === '/styles.css') {
+          const filePath = req.path.substring(1); // Remove leading slash
+          return this._serveFile(res, filePath, this._getContentType(filePath));
+        }
+        
+        // Handle WebSocket upgrade requests
+        if (req.path === '/ws') {
+          // WebSocket will be handled by the WebSocket server
+          return next();
+        }
+        
+        // If no FluxManager route matched, continue to next middleware
+        next();
+      });
+      
+      // Add monitoring middleware
       app.use(this.expressMiddleware());
       console.log('✅ Flux Manager attached to Express-like framework');
     } else if (app && typeof app.addHook === 'function') {
@@ -675,9 +755,23 @@ class FluxManager {
   /**
    * ✨ ULTRA-SIMPLE INTEGRATION - One line setup!
    * Creates standalone Flux Manager with optional app integration
+   * 
+   * @param {Object|null} app - Express app instance or null for standalone
+   * @param {Object} options - Configuration options
+   * @returns {FluxManager} FluxManager instance
    */
   static attach(app = null, options = {}) {
-    const fluxManager = new FluxManager(options);
+    // 🔧 SAME-PORT DETECTION: If app is provided and port matches app's port,
+    // disable autoStart to prevent port conflicts
+    let fluxManagerOptions = { ...options };
+    
+    if (app && typeof app.use === 'function') {
+      // For Express-like frameworks with same-port integration
+      // Disable auto-start to prevent creating separate HTTP server
+      fluxManagerOptions.autoStart = false;
+    }
+    
+    const fluxManager = new FluxManager(fluxManagerOptions);
     
     if (app) {
       fluxManager.attachTo(app, options);
@@ -699,7 +793,6 @@ class FluxManager {
       this.wss.close();
       this.wss = null;
     }
-    return this;
   }
 }
 
